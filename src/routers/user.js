@@ -13,6 +13,7 @@ router.post('/users', async (req, res) => {
         await user.save()
         sendWelcomeEmail(user.email, user.name)
         const token = await user.generateAuthToken()
+        res.cookie('token', token, { maxAge: 900000, httpOnly: true });
         res.status(201).send({ user, token })
     } catch (e) {
         res.status(400).send(e)
@@ -23,6 +24,7 @@ router.post('/users/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
         const token = await user.generateAuthToken()
+        res.cookie('token', token, { maxAge: 900000, httpOnly: true });
         res.send({ user, token })
     } catch (e) {
         res.status(400).send()
@@ -86,16 +88,16 @@ router.delete('/users/me', auth, async (req, res) => {
 
 const upload = multer({
     limits: {
-       fileSize: 1000000
+        fileSize: 1000000
     },
-    fileFilter(req, file, cb){
-      if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-         return cb(new Error('Please upload a Word document'))
-         
-      }
-      cb(undefined, true)
-      //  cb(new Error('File must be a PDF'))
-      //  cb(undefined, false)
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return cb(new Error('Please upload a Word document'))
+
+        }
+        cb(undefined, true)
+        //  cb(new Error('File must be a PDF'))
+        //  cb(undefined, false)
     }
 })
 
@@ -105,7 +107,7 @@ router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) 
     await req.user.save()
     res.send()
 }, (error, req, res, next) => {
-   res.status(400).send({ error: error.message })
+    res.status(400).send({ error: error.message })
 })
 
 router.delete('/users/me/avatar', auth, async (req, res) => {
